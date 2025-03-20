@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Read Aloud</title>
+    <script>
+        let utterance;
+
+        // Function to populate the voice dropdown
+        function populateVoices() {
+            let voiceSelect = document.getElementById("voiceSelect");
+            let voices = speechSynthesis.getVoices();
+            voiceSelect.innerHTML = "";
+            voices.forEach((voice, index) => {
+                let option = document.createElement("option");
+                option.value = index;
+                option.textContent = voice.name + (voice.lang ? ` (${voice.lang})` : "");
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        // Function to read aloud the text
+        function readAloud() {
+            let text = document.getElementById("textArea").value;
+            let speed = parseFloat(document.getElementById("speed").value);
+            let voiceSelect = document.getElementById("voiceSelect").value;
+            let voices = speechSynthesis.getVoices();
+
+            if (!utterance) {
+                utterance = new SpeechSynthesisUtterance(text);
+            } else {
+                utterance.text = text;
+            }
+
+            utterance.voice = voices[voiceSelect];
+            utterance.rate = speed;
+            try {
+                speechSynthesis.speak(utterance);
+                document.getElementById("speedStatus").textContent = 
+                    `The speed ${speed}x is working correctly.`;
+            } catch (error) {
+                document.getElementById("speedStatus").textContent = 
+                    `The speed ${speed}x is not supported by your browser.`;
+            }
+
+        }
+
+        // Function to stop reading aloud
+        function stopReading() {
+            speechSynthesis.cancel();
+            utterance = null;
+        }
+
+        // Function to pause reading aloud
+        function pauseReading() {
+            speechSynthesis.pause();
+        }
+
+        // Function to resume reading aloud
+        function resumeReading() {
+            speechSynthesis.resume();
+        }
+
+        // Function to update speed dynamically
+        function updateSpeed() {
+            let speed = parseFloat(document.getElementById("speed").value);
+            document.getElementById("currentSpeed").textContent = `Current Speed: ${speed}x`;
+            if (utterance) {
+                speechSynthesis.cancel();
+                utterance.rate = speed;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Function to read and display the content of the uploaded file
+        function readFile(event) {
+            let file = event.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById("textArea").value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Function to initialize the page
+        window.onload = function() {
+            document.getElementById("upload").addEventListener("change", readFile);
+            document.getElementById("readButton").addEventListener("click", readAloud);
+            document.getElementById("stopButton").addEventListener("click", stopReading);
+            document.getElementById("pauseButton").addEventListener("click", pauseReading);
+            document.getElementById("resumeButton").addEventListener("click", resumeReading);
+            document.getElementById("speed").addEventListener("input", updateSpeed);
+            speechSynthesis.onvoiceschanged = populateVoices;
+            populateVoices();
+        }
+    </script>
+</head>
+<body>
+    <h1>Offline Read Aloud Program</h1>
+    <input type="file" id="upload" accept=".txt">
+    <br>
+    <textarea id="textArea" rows="10" cols="50" placeholder="Enter text here..."></textarea>
+    <br>
+    <label for="speed">Speed (e.g., 1 for normal, 9 for 9X):</label>
+    <input type="number" id="speed" value="1" step="0.1" min="0.1" max="9">
+    <p id="currentSpeed">Current Speed: 1x</p>
+    <br>
+    <label for="voiceSelect">Select Voice:</label>
+    <select id="voiceSelect"></select>
+    <br>
+    <p id="speedStatus"></p>
+    <button id="readButton">Read Aloud</button>
+    <button id="pauseButton">Pause</button>
+    <button id="resumeButton">Resume</button>
+    <button id="stopButton">Stop</button>
+</body>
+</html>
